@@ -1,0 +1,14 @@
+{
+  "name": "node-platformer",
+  "description": "Multiplayer platformer using node and html5",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/allknowingfrog/node-platformer.git"
+  },
+  "author": "Jeremiah Bohling",
+  "dependencies": {
+    "express": "~4.10.6",
+    "socket.io": "~1.2.1"
+  }
+}

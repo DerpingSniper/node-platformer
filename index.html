@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<title>Node Platformer</title>
+<style>
+body {
+    padding:0px;
+    margin:0px;
+    background:#666;
+}
+canvas {
+    display:block;
+    background:#000;
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+var socket = io.connect();
+
+//canvas vars
+var canvas;
+var CANVAS_W = 600;
+var CANVAS_H = 600;
+var ctx;
+
+//keypress vars
+var rightKey = false;
+var leftKey = false;
+var upKey = false;
+var downKey = false;
+
+//key-binding vars
+var RIGHT = 39;
+var LEFT = 37;
+var UP = 38;
+var DOWN = 40;
+
+//playr vars
+var player;
+var PLAYER_W = 50;
+var PLAYER_H = 50;
+var players = [];
+
+//misc vars
+var FPS = 30;
+
+//game loop
+function gameLoop() {
+    //clearCanvas();
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    drawPlayers();
+}
+
+//init functions
+function init() {
+    canvas = document.getElementById('canvas');
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    ctx = canvas.getContext('2d');
+    document.addEventListener('keydown', keyDown, false);
+    document.addEventListener('keyup', keyUp, false);
+    setInterval(gameLoop, 1000/FPS);
+}
+
+//draw functions
+function clearCanvas() {
+    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+}
+
+function drawPlayers() {
+    for(var p in players) {
+        console.log(players[p].x);
+        ctx.fillStyle="white";
+        ctx.fillRect(players[p].x, players[p].y, PLAYER_W, PLAYER_H);
+    }
+}
+
+//input functions
+function keyDown(e) {
+    if (e.keyCode == RIGHT) {
+        socket.emit('keyDown', 'right');
+        rightKey = true;
+    } else if (e.keyCode == LEFT) {
+        socket.emit('keyDown', 'left');
+        leftKey = true;
+    }
+
+    if (e.keyCode == UP) {
+        socket.emit('keyDown', 'up');
+        upKey = true;
+    } else if (e.keyCode == DOWN) {
+        socket.emit('keyDown', 'down');
+        downKey = true;
+    }
+}
+
+function keyUp(e) {
+    if (e.keyCode == RIGHT) {
+        socket.emit('keyUp', 'right');
+        rightKey = false;
+    } else if (e.keyCode == LEFT) {
+        socket.emit('keyUp', 'left');
+        leftKey = false;
+    }
+
+    if (e.keyCode == UP) {
+        socket.emit('keyUp', 'up');
+        upKey = false;
+    } else if (e.keyCode == DOWN) {
+        socket.emit('keyUp', 'down');
+        downKey = false;
+    }
+}
+
+jQuery(function($){
+    var nickForm = $('#setNick');
+    var nickError = $('#nickError');
+    var nickBox = $('#nickname');
+    var users = $('#users');
+    nickForm.submit(function(e){
+        e.preventDefault();
+        socket.emit('login', nickBox.val(), function(data){
+            if(data) {
+                $('#nickWrap').hide();
+                $('#contentWrap').show();
+            } else {
+                nickError.html('That username is already taken! Try again.');
+            }
+        });
+        nickBox.val('');
+    });
+    socket.on('usernames', function(data) {
+        var html = '';
+        for(i=0; i < data.length; i++) {
+            html += data[i] + '<br>';
+        }
+        users.html(html);
+    });
+    socket.on('update', function(data) {
+        players = data;
+    });
+    init();
+});
+</script>
+</head>
+<body>
+
+<div id="nickWrap" style="margin:50px;">
+    <p>Enter a username:</p>
+    <p id="nickError"></p>
+    <form id="setNick">
+    <input style="width:150px;" id="nickname"></input>
+    <input type="submit"></input>
+    </form>
+</div>
+
+<div style="width:100%;display:none;" id="contentWrap">
+    <div style="margin:50px;">
+        <div style="float:left;margin-right:15px;"><canvas id="canvas"></canvas></div>
+        <div id="users"></div>
+    </div>
+    <div id="output"></div>
+</div>
+
+</body>
+</html>
