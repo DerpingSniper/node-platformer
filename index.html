@@ -20,8 +20,8 @@ var socket = io.connect();
 
 //canvas vars
 var canvas;
-var CANVAS_W = 600;
-var CANVAS_H = 600;
+var CANVAS_W;
+var CANVAS_H;
 var ctx;
 
 //keypress vars
@@ -38,8 +38,8 @@ var DOWN = 40;
 
 //playr vars
 var player;
-var PLAYER_W = 50;
-var PLAYER_H = 50;
+var PLAYER_W;
+var PLAYER_H;
 var players = [];
 
 //misc vars
@@ -70,7 +70,6 @@ function clearCanvas() {
 
 function drawPlayers() {
     for(var p in players) {
-        console.log(players[p].x);
         ctx.fillStyle="white";
         ctx.fillRect(players[p].x, players[p].y, PLAYER_W, PLAYER_H);
     }
@@ -124,6 +123,11 @@ jQuery(function($){
             if(data) {
                 $('#nickWrap').hide();
                 $('#contentWrap').show();
+                CANVAS_W = data.cw;
+                CANVAS_H = data.ch;
+                PLAYER_W = data.pw;
+                PLAYER_H = data.ph;
+                init();
             } else {
                 nickError.html('That username is already taken! Try again.');
             }
@@ -140,7 +144,6 @@ jQuery(function($){
     socket.on('update', function(data) {
         players = data;
     });
-    init();
 });
 </script>
 </head>
