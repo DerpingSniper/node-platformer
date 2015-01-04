@@ -38,19 +38,15 @@ var DOWN = 40;
 
 //player vars
 var player;
-var PLAYER_W;
-var PLAYER_H;
 var players = [];
 
-var platforms = [];
-
 //misc vars
+var platforms = [];
 var FPS = 30;
 
 //game loop
 function gameLoop() {
-    //clearCanvas();
-    ctx.clearRect(0,0,CANVAS_W,CANVAS_H);
+    clearCanvas();
     drawPlatforms();
     drawPlayers();
 }
@@ -81,7 +77,7 @@ function drawPlatforms() {
 function drawPlayers() {
     for(var p in players) {
         ctx.fillStyle="white";
-        ctx.fillRect(players[p].x, players[p].y, PLAYER_W, PLAYER_H);
+        ctx.fillRect(players[p].x, players[p].y, players[p].w, players[p].h);
     }
 }
 
@@ -133,11 +129,9 @@ jQuery(function($){
             if(data) {
                 $('#nickWrap').hide();
                 $('#contentWrap').show();
-                CANVAS_W = data.cw;
-                CANVAS_H = data.ch;
-                PLAYER_W = data.pw;
-                PLAYER_H = data.ph;
-                platforms = data.pf;
+                CANVAS_W = data.CANVAS_W;
+                CANVAS_H = data.CANVAS_H;
+                platforms = data.platforms;
                 init();
             } else {
                 nickError.html('That username is already taken! Try again.');
