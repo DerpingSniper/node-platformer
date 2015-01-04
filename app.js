@@ -97,6 +97,12 @@ addPlatform(PLAYER_W*3, CANVAS_H - PLAYER_H*2, PLAYER_W, PLAYER_H);
 setInterval(gameLoop, 1000/FPS);
 
 function gameLoop() {
+    movePlayers();
+    playerCollision();
+    io.sockets.emit('update', players);
+}
+
+function movePlayers() {
     var player, plat;
     for(var p in players) {
         player = players[p];
@@ -157,7 +163,24 @@ function gameLoop() {
             player.speed = 0;
         }
     }
-    io.sockets.emit('update', players);
+}
+
+function playerCollision() {
+    var player, test;
+    for(var p in players) {
+        player = players[p];
+        for(var t in players) {
+            test = players[t];
+            if(player == test) continue;
+            if(collision(player.x, player.y, PLAYER_W, PLAYER_H, test.x, test.y, PLAYER_W, PLAYER_H)) { 
+                if(player.y < test.y) {
+                    setTimeout(playerReset(test), 3000);
+                } else if(test.y < player.y) {
+                    setTimeout(playerReset(player), 3000);
+                }
+            }
+        }
+    }
 }
 
 function platCollision(player) {
@@ -199,6 +222,13 @@ function collision(x,y,w,h,xx,yy,ww,hh) {
     } else {
         return false;
     }
+}
+
+function playerReset(player) {
+    player.x = 0;
+    player.y = 0;
+    player.fall = true;
+    player.speed = 1;
 }
 
 function addPlatform(xx,yy,ww,hh) {
