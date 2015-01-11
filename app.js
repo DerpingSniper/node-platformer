@@ -5,17 +5,19 @@ var io = require('socket.io').listen(server);
 
 var player = require('./player.js');
 
-var users = {};
-var players = {};
-var platforms = [];
-
 //globals
+users = {};
+players = {};
+platforms = [];
+
 CANVAS_W = 600;
 CANVAS_H = 600;
 PLAYER_W = 50;
 PLAYER_H = 50;
 JUMP = 40;
-MAX_SPEED = 3;
+MAX_YSPEED = 7;
+MAX_XSPEED = 3;
+STOMP_SPEED = 3;
 ACCEL_TICKS = 10;
 FPS = 60;
 
@@ -67,22 +69,7 @@ function gameLoop() {
     var update = {};
 
     for(var p in players) {
-        players[p].move(platforms);
-    }
-
-    for(var p in players) {
-        player = players[p];
-        for(var t in players) {
-            test = players[t];
-            if(player == test) continue;
-            if(player.collide(test)) {
-                if(player.y < test.y) {
-                    test.reset();
-                } else if(test.y < player.y) {
-                    player.reset();
-                }
-            }
-        }
+        players[p].move();
     }
 
     for(var p in players) {

@@ -15,11 +15,11 @@ module.exports = function(nickname, x, y, w, h) {
     this.left = false;
     this.right = false;
 
-    this.move = function(platforms) {
+    this.move = function() {
         if(this.fall) {
-            this.ySpeed++;
+            if(this.ySpeed < MAX_YSPEED * ACCEL_TICKS) this.ySpeed++;
             this.y += Math.ceil(this.ySpeed/ACCEL_TICKS);
-            platform = this.collidePlatforms(platforms);
+            platform = this.collidePlatforms();
             if(platform) {
                 if(this.ySpeed <= 0) {
                     this.y = platform.y + platform.h;
@@ -30,51 +30,109 @@ module.exports = function(nickname, x, y, w, h) {
                     this.ySpeed = 0;
                 }
             }
+            player = this.collidePlayers();
+            if(player) {
+                if(this.ySpeed <= 0) {
+                    this.y = player.y + player.h;
+                    this.ySpeed = 1;
+                } else if(this.ySpeed >= STOMP_SPEED * ACCEL_TICKS) {
+                    player.reset();
+                    this.ySpeed = 1;
+                } else {
+                    this.y = player.y - this.h;
+                    this.fall = false;
+                    this.ySpeed = 0;
+                }
+            }
         } else if(this.up) {
             this.fall = true;
             this.ySpeed = -JUMP;
             this.y -= JUMP/ACCEL_TICKS;
-            platform = this.collidePlatforms(platforms);
+            platform = this.collidePlatforms();
             if(platform) {
                 this.y = platform.y + platform.h;
                 this.ySpeed = 1;
             }
-            if(this.xSpeed < -(MAX_SPEED - 1)) {
+            player = this.collidePlayers();
+            if(player) {
+                this.y = player.y + player.h;
+                this.ySpeed = 1;
+            }
+            if(this.xSpeed < -(MAX_XSPEED - 1)) {
                 this.xSpeed++;
-            } else if(this.xSpeed > (MAX_SPEED - 1)) {
+            } else if(this.xSpeed > (MAX_XSPEED - 1)) {
                 this.xSpeed--;
             }
         } else {
             this.y += 1;
-            platform = this.collidePlatforms(platforms);
+            platform = this.collidePlatforms();
             if(platform) {
                 this.y = platform.y - this.h;
             } else {
                 this.fall = true;
                 this.ySpeed = 1;
             }
+            player = this.collidePlayers();
+            if(player) {
+                this.y = player.y - this.h;
+            } else {
+                this.fall = true;
+                this.ySpeed = 1;
+            }
         }
+
+        if(this.y < 0) this.y = 0;
+        if(this.y > CANVAS_H - this.h) {
+            this.y = CANVAS_H - this.h;
+            this.fall = false;
+            this.ySpeed = 0;
+        }
+
         if(this.left) {
             if(this.fall) {
-                if(this.xSpeed > -(MAX_SPEED - 1)) this.xSpeed--;
+                if(this.xSpeed > -(MAX_XSPEED - 1)) this.xSpeed--;
             } else {
-                if(this.xSpeed > -MAX_SPEED) this.xSpeed--;
+                if(this.xSpeed > -MAX_XSPEED) this.xSpeed--;
             }
             this.x += this.xSpeed;
-            platform = this.collidePlatforms(platforms);
+            platform = this.collidePlatforms();
             if(platform) {
-                this.x = platform.x + platform.w;
+                if(this.xSpeed < 0) {
+                    this.x = platform.x + platform.w;
+                } else {
+                    this.x = platform.x - this.w;
+                }
+            }
+            player = this.collidePlayers();
+            if(player) {
+                if(this.xSpeed < 0) {
+                    this.x = player.x + player.w;
+                } else {
+                    this.x = player.x - this.w;
+                }
             }
         } else if(this.right) {
             if(this.fall) {
-                if(this.xSpeed < (MAX_SPEED - 1)) this.xSpeed++;
+                if(this.xSpeed < (MAX_XSPEED - 1)) this.xSpeed++;
             } else {
-                if(this.xSpeed < MAX_SPEED) this.xSpeed++;
+                if(this.xSpeed < MAX_XSPEED) this.xSpeed++;
             }
             this.x += this.xSpeed;
-            platform = this.collidePlatforms(platforms);
+            platform = this.collidePlatforms();
             if(platform) {
-                this.x = platform.x - this.w;
+                if(this.xSpeed > 0) {
+                    this.x = platform.x - this.w;
+                } else {
+                    this.x = platform.x + platform.w;
+                }
+            }
+            player = this.collidePlayers();
+            if(player) {
+                if(this.xSpeed > 0) {
+                    this.x = player.x - this.w;
+                } else {
+                    this.x = player.x + player.w;
+                }
             }
         } else {
             this.xSpeed = 0;
@@ -82,12 +140,6 @@ module.exports = function(nickname, x, y, w, h) {
 
         if(this.x < 0) this.x = 0;
         if(this.x > CANVAS_W - this.w) this.x = CANVAS_W - this.w;
-        if(this.y < 0) this.y = 0;
-        if(this.y > CANVAS_H - this.h) {
-            this.y = CANVAS_H - this.h;
-            this.fall = false;
-            this.ySpeed = 0;
-        }
     }
 
     this.keyDown = function(key) {
@@ -124,7 +176,7 @@ module.exports = function(nickname, x, y, w, h) {
         }
     }
 
-    this.collidePlatforms = function(platforms) {
+    this.collidePlatforms = function() {
         var platform;
         for(var p in platforms) {
             platform = platforms[p];
@@ -133,6 +185,17 @@ module.exports = function(nickname, x, y, w, h) {
             }
         }
         return false;
+    }
+
+    this.collidePlayers = function() {
+        var player;
+        for(var p in players) {
+            player = players[p];
+            if(player == this) continue;
+            if(this.collide(player)) {
+                return player;
+            }
+        }
     }
 
     this.collide = function(obj) {
