@@ -7,8 +7,12 @@ module.exports = function(nickname, x, y, w, h) {
     this.h = h;
 
     this.xSpeed = 0;
+    this.xAccel = 0;
     this.ySpeed = 0;
-    this.fall = false;
+    this.yAccel = 0;
+    this.jumpAccel = 0;
+
+    this.airborn = true;
     this.wall = false;
 
     this.up = false;
@@ -17,144 +21,138 @@ module.exports = function(nickname, x, y, w, h) {
     this.right = false;
 
     this.move = function() {
-        if(this.fall && !this.wall) {
-            if(this.ySpeed < MAX_YSPEED * ACCEL_TICKS) this.ySpeed++;
-            this.y += Math.ceil(this.ySpeed/ACCEL_TICKS);
+        //apply force acceleration
+        if(this.airborn) {
+            this.yAccel -= this.jumpAccel;
+            this.yAccel += ACCEL_GRAV;
+            this.yAccel -= this.ySpeed * DECEL_AIR;
+            this.xAccel -= this.xSpeed * DECEL_AIR;
+        } else {
+            this.xAccel -= this.xSpeed * (DECEL_AIR + DECEL_LAND);
+        }
+
+        //apply player acceleration
+        if(this.up) {
+            if(!this.airborn) {
+                this.jumpAccel = ACCEL_JUMP;
+                this.airborn = true;
+            } else if(this.jumpAccel > 0) {
+                this.yAccel -= this.jumpAccel;
+                this.jumpAccel -= DECEL_JUMP;
+            } else {
+                this.jumpAccel = 0;
+            }
+        } else {
+            this.jumpAccel = 0;
+        }
+
+        if(this.left && !this.right) {
+            if(this.airborn) {
+                this.xAccel -= ACCEL_AIR;
+            } else {
+                this.xAccel -= ACCEL_LAND;
+            }
+        } else if(this.right && !this.left) {
+            if(this.airborn) {
+                this.xAccel += ACCEL_AIR;
+            } else {
+                this.xAccel += ACCEL_LAND;
+            }
+        } else {
+        }
+
+        //update speed
+        this.ySpeed += this.yAccel;
+        this.xSpeed += this.xAccel;
+
+        //move player vertically
+        if(this.ySpeed != 0) {
+            this.y += Math.round(this.ySpeed);
+
             platform = this.collidePlatforms();
             if(platform) {
-                if(this.ySpeed <= 0) {
+                if(this.ySpeed <= 0) { //hit bottom of platform
                     this.y = platform.y + platform.h;
-                    this.ySpeed = 1;
+                    this.ceilingStop();
                 } else {
                     this.y = platform.y - this.h;
-                    this.fall = false;
-                    this.ySpeed = 0;
+                    this.floorStop();
                 }
             }
+
             player = this.collidePlayers();
             if(player) {
-                if(this.ySpeed <= 0) {
+                if(this.ySpeed <= 0) { //top edge hit player
                     this.y = player.y + player.h;
-                    this.ySpeed = 1;
-                } else if(this.ySpeed >= STOMP_SPEED * ACCEL_TICKS) {
+                    this.ceilingStop();
+                } else if(this.ySpeed >= SPLATTER) { //hit player at lethal speed
                     player.reset();
-                    this.ySpeed = 1;
+                    this.ySpeed /= 2;
+                    this.yAccel /= 2;
                 } else {
                     this.y = player.y - this.h;
-                    this.fall = false;
-                    this.ySpeed = 0;
+                    this.floorStop();
                 }
             }
-        } else if(this.up) {
-            this.fall = true;
-            this.ySpeed = -JUMP;
-            this.y -= JUMP/ACCEL_TICKS;
-            platform = this.collidePlatforms();
-            if(platform) {
-                this.y = platform.y + platform.h;
-                this.ySpeed = 1;
-            }
-            player = this.collidePlayers();
-            if(player) {
-                this.y = player.y + player.h;
-                this.ySpeed = 1;
-            }
-            if(this.xSpeed < -(MAX_XSPEED - 1)) {
-                this.xSpeed++;
-            } else if(this.xSpeed > (MAX_XSPEED - 1)) {
-                this.xSpeed--;
-            }
-        } else {
-            this.y += 1;
-            platform = this.collidePlatforms();
-            if(platform) {
-                this.y = platform.y - this.h;
-            } else {
-                this.fall = true;
-                this.ySpeed = 1;
-            }
-            player = this.collidePlayers();
-            if(player) {
-                this.y = player.y - this.h;
-            } else {
-                this.fall = true;
-                this.ySpeed = 1;
+
+            if(this.y < 0) {
+                this.y = 0;
+                this.ceilingStop();
+            } else if(this.y > CANVAS_H - this.h) {
+                this.y = CANVAS_H - this.h;
+                this.floorStop();
             }
         }
 
-        if(this.y < 0) this.y = 0;
-        if(this.y > CANVAS_H - this.h) {
-            this.y = CANVAS_H - this.h;
-            this.fall = false;
-            this.ySpeed = 0;
-        }
-
-        this.wall = false;
-
-        if(this.left) {
-            if(this.fall) {
-                if(this.xSpeed > -(MAX_XSPEED - 1)) this.xSpeed--;
-            } else {
-                if(this.xSpeed > -MAX_XSPEED) this.xSpeed--;
-            }
+        //move player horizontally
+        if(this.xSpeed != 0) {
             this.x += this.xSpeed;
+
             platform = this.collidePlatforms();
             if(platform) {
-                this.wall = true;
-                if(this.xSpeed < 0) {
+                if(this.xSpeed < 0) { //left edge hit platform
                     this.x = platform.x + platform.w;
                 } else {
                     this.x = platform.x - this.w;
                 }
+                this.wallStop();
             }
-            player = this.collidePlayers();
-            if(player) {
-                if(this.xSpeed < 0) {
-                    this.x = player.x + player.w;
-                } else {
-                    this.x = player.x - this.w;
-                }
-            }
-        } else if(this.right) {
-            if(this.fall) {
-                if(this.xSpeed < (MAX_XSPEED - 1)) this.xSpeed++;
-            } else {
-                if(this.xSpeed < MAX_XSPEED) this.xSpeed++;
-            }
-            this.x += this.xSpeed;
-            platform = this.collidePlatforms();
-            if(platform) {
-                this.wall = true;
-                if(this.xSpeed > 0) {
-                    this.x = platform.x - this.w;
-                } else {
-                    this.x = platform.x + platform.w;
-                }
-            }
-            player = this.collidePlayers();
-            if(player) {
-                if(this.xSpeed > 0) {
-                    this.x = player.x - this.w;
-                } else {
-                    this.x = player.x + player.w;
-                }
-            }
-        } else {
-            if(this.xSpeed > 0) {
-                this.xSpeed--;
-            } else if(this.xSpeed < 0) {
-                this.xSpeed++;
-            }
-        }
 
-        if(this.x < 0) {
-            this.x = 0;
-            this.wall = true;
+            player = this.collidePlayers();
+            if(player) {
+                if(this.xSpeed < 0) { //left edge hit player
+                    this.x = player.x + player.w;
+                } else {
+                    this.x = player.x - this.w;
+                }
+                this.wallStop();
+            }
+
+            if(this.x < 0) {
+                this.x = 0;
+                this.wallStop();
+            } else if(this.x > CANVAS_W - this.w) {
+                this.x = CANVAS_W - this.w;
+                this.wallStop();
+            }
         }
-        if(this.x > CANVAS_W - this.w) {
-            this.x = CANVAS_W - this.w;
-            this.wall = true;
-        }
+    }
+
+    this.ceilingStop = function() {
+        this.ySpeed = 0;
+        this.yAccel = 0;
+        this.jumpAccel = 0;
+    }
+
+    this.floorStop = function() {
+        this.ySpeed = 0;
+        this.yAccel = 0;
+        this.airborn = false;
+    }
+
+    this.wallStop = function() {
+        this.xSpeed = 0;
+        this.xAccel = 0;
     }
 
     this.keyDown = function(key) {
@@ -250,7 +248,7 @@ module.exports = function(nickname, x, y, w, h) {
     this.reset = function() {
         this.x = 0;
         this.y = 0;
-        this.fall = false;
+        this.airborn = false;
         this.ySpeed = 0;
     }
 }
