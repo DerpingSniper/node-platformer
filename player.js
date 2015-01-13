@@ -106,7 +106,7 @@ module.exports = function(nickname, x, y, w, h) {
 
         //move player horizontally
         if(this.xSpeed != 0) {
-            this.x += this.xSpeed;
+            this.x += Math.round(this.xSpeed);
 
             platform = this.collidePlatforms();
             if(platform) {
@@ -135,6 +135,8 @@ module.exports = function(nickname, x, y, w, h) {
                 this.x = CANVAS_W - this.w;
                 this.wallStop();
             }
+
+            this.checkAirborn();
         }
     }
 
@@ -153,6 +155,12 @@ module.exports = function(nickname, x, y, w, h) {
     this.wallStop = function() {
         this.xSpeed = 0;
         this.xAccel = 0;
+    }
+
+    this.checkAirborn = function() {
+        this.y++;
+        if(!this.collidePlatforms() && !this.collidePlayers() && !this.y > CANVAS_H - this.h) this.airborn = true;
+        this.y--;
     }
 
     this.keyDown = function(key) {
