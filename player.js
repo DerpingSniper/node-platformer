@@ -10,7 +10,6 @@ module.exports = function(nickname, x, y, w, h) {
     this.xAccel = 0;
     this.ySpeed = 0;
     this.yAccel = 0;
-    this.jumpAccel = 0;
 
     this.airborn = true;
     this.wall = false;
@@ -21,29 +20,27 @@ module.exports = function(nickname, x, y, w, h) {
     this.right = false;
 
     this.move = function() {
-        //apply force acceleration
+        //apply acceleration
         if(this.airborn) {
-            this.yAccel -= this.jumpAccel;
-            this.yAccel += ACCEL_GRAV;
-            this.yAccel -= this.ySpeed * DECEL_AIR;
-            this.xAccel -= this.xSpeed * DECEL_AIR;
+            this.ySpeed += this.yAccel;
+            this.ySpeed += ACCEL_GRAV;
+            this.xSpeed -= this.xSpeed * DECEL_AIR;
         } else {
-            this.xAccel -= this.xSpeed * (DECEL_AIR + DECEL_LAND);
+            this.xSpeed -= this.xSpeed * (DECEL_AIR + DECEL_LAND);
         }
 
-        //apply player acceleration
+        //update player acceleration
         if(this.up) {
             if(!this.airborn) {
-                this.jumpAccel = ACCEL_JUMP;
+                this.yAccel = -ACCEL_JUMP;
                 this.airborn = true;
-            } else if(this.jumpAccel > 0) {
-                this.yAccel -= this.jumpAccel;
-                this.jumpAccel -= DECEL_JUMP;
+            } else if(this.yAccel < 0) {
+                this.yAccel += DECEL_JUMP;
             } else {
-                this.jumpAccel = 0;
+                this.yAccel = 0;
             }
         } else {
-            this.jumpAccel = 0;
+            this.yAccel = 0;
         }
 
         if(this.left && !this.right) {
@@ -59,11 +56,14 @@ module.exports = function(nickname, x, y, w, h) {
                 this.xAccel += ACCEL_LAND;
             }
         } else {
+            this.xAccel -= this.xAccel * (DECEL_AIR + DECEL_LAND);
         }
 
         //update speed
         this.ySpeed += this.yAccel;
         this.xSpeed += this.xAccel;
+
+        if(Math.abs(this.xSpeed) < .1) this.xSpeed = 0;
 
         //move player vertically
         if(this.ySpeed != 0) {
@@ -143,7 +143,7 @@ module.exports = function(nickname, x, y, w, h) {
     this.ceilingStop = function() {
         this.ySpeed = 0;
         this.yAccel = 0;
-        this.jumpAccel = 0;
+        this.yAccel = 0;
     }
 
     this.floorStop = function() {
@@ -159,7 +159,11 @@ module.exports = function(nickname, x, y, w, h) {
 
     this.checkAirborn = function() {
         this.y++;
-        if(!this.collidePlatforms() && !this.collidePlayers() && !this.y > CANVAS_H - this.h) this.airborn = true;
+        if(this.collidePlatforms() || this.collidePlayers() || (this.y > CANVAS_H - this.h)) {
+            this.airborn = false;
+        } else {
+            this.airborn = true;
+        }
         this.y--;
     }
 
@@ -217,6 +221,7 @@ module.exports = function(nickname, x, y, w, h) {
                 return player;
             }
         }
+        return false;
     }
 
     this.collide = function(obj) {

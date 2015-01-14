@@ -16,14 +16,14 @@ PLAYER_W = 50;
 PLAYER_H = 50;
 
 TPS = 60; //ticks per second
-ACCEL_GRAV = .1; //downward acceleration per tick
-DECEL_LAND = .015; //solid-surface decelleration per speed unit per tick
-DECEL_AIR = .015; //decelleration per speed unit per tick
+ACCEL_GRAV = 1; //downward acceleration per tick
+DECEL_LAND = .15; //solid-surface decelleration per speed unit per tick
+DECEL_AIR = .3; //decelleration per speed unit per tick
 ACCEL_LAND = .1; //player controlled acceleration per tick while grounded
 ACCEL_AIR = .05; //player controlled acceleration per tick while airborn
 SPLATTER = 6; //lethal speed
-ACCEL_JUMP = .5; //initial jump accel
-DECEL_JUMP = .1; //deceleration per tick while jumping
+ACCEL_JUMP = 1.75; //initial jump accel
+DECEL_JUMP = .25; //deceleration per tick while jumping
 
 server.listen(3000);
 
