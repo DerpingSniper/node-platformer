@@ -31,7 +31,7 @@ io.sockets.on('connection', function(socket){
     socket.on('login', function(data, callback){
         if(data in users) {
             callback(false);
-        } else {
+        } else if(data) {
             callback({
                 CANVAS_W: CANVAS_W,
                 CANVAS_H: CANVAS_H,
@@ -41,6 +41,8 @@ io.sockets.on('connection', function(socket){
             users[socket.nickname] = socket;
             players[socket.nickname] = new player(socket.nickname, 0, 0, PLAYER_W, PLAYER_H);
             io.sockets.emit('usernames', Object.keys(users));
+        } else {
+            callback(false);
         }
     });
     socket.on('keyDown', function(data) {
@@ -52,6 +54,7 @@ io.sockets.on('connection', function(socket){
     socket.on('disconnect', function(data) {
         if(socket.nickname) {
             delete users[socket.nickname];
+            delete players[socket.nickname];
             io.sockets.emit('usernames', Object.keys(users));
         } else {
             return;
