@@ -84,17 +84,21 @@ function drawPlayers() {
 //input functions
 function keyDown(e) {
     if (e.keyCode == RIGHT) {
+        e.preventDefault();
         socket.emit('keyDown', 'right');
         rightKey = true;
     } else if (e.keyCode == LEFT) {
+        e.preventDefault();
         socket.emit('keyDown', 'left');
         leftKey = true;
     }
 
     if (e.keyCode == UP) {
+        e.preventDefault();
         socket.emit('keyDown', 'up');
         upKey = true;
     } else if (e.keyCode == DOWN) {
+        e.preventDefault();
         socket.emit('keyDown', 'down');
         downKey = true;
     }
