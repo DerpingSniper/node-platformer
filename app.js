@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
+var fs = require('fs');
 
 var player = require('./player.js');
 
@@ -20,6 +21,7 @@ MAX_XSPEED = 3;
 STOMP_SPEED = 3;
 ACCEL_TICKS = 10;
 FPS = 60;
+MAP_FILE = "./testMap.json";
 
 server.listen(3000);
 
@@ -62,8 +64,16 @@ io.sockets.on('connection', function(socket){
     });
 });
 
-platforms[platforms.length] = {x: PLAYER_W, y: CANVAS_H - PLAYER_H, w: PLAYER_W, h: PLAYER_H};
-platforms[platforms.length] = {x: PLAYER_W*3, y: CANVAS_H - PLAYER_H*2, w: PLAYER_W, h: PLAYER_H};
+fs.readFile(MAP_FILE, 'utf8', function(err, data) {
+    if(err) {
+        return console.log(err);
+    }
+    var map = JSON.parse(data);
+
+    for(var m in map) {
+        platforms[platforms.length] = map[m];
+    }
+});
 
 setInterval(gameLoop, 1000/FPS);
 
