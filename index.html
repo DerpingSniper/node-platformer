@@ -123,13 +123,9 @@ function keyUp(e) {
 }
 
 jQuery(function($){
-    var nickForm = $('#setNick');
-    var nickError = $('#nickError');
-    var nickBox = $('#nickname');
-    var users = $('#users');
-    nickForm.submit(function(e){
+    $('#setNick').submit(function(e){
         e.preventDefault();
-        socket.emit('login', nickBox.val(), function(data){
+        socket.emit('login', $('#nickname').val(), function(data){
             if(data) {
                 $('#nickWrap').hide();
                 $('#contentWrap').show();
@@ -138,20 +134,25 @@ jQuery(function($){
                 platforms = data.platforms;
                 init();
             } else {
-                nickError.html('That username is already taken! Try again.');
+                $('#nickError').html('That username is already taken! Try again.');
             }
         });
-        nickBox.val('');
+        $('#nickname').val('');
     });
     socket.on('usernames', function(data) {
         var html = '';
         for(i=0; i < data.length; i++) {
-            html += data[i] + '<br>';
+            html += "<span id='" + data[i] + "'></span> " + data[i] + '<br>';
         }
-        users.html(html);
+        $('#users').html(html);
     });
     socket.on('update', function(data) {
         players = data;
+        var html;
+        for(var p in players) {
+            html = "K: " + players[p].k + ", D: " + players[p].d;
+            $('#' + p).html(html);
+        }
     });
 });
 </script>

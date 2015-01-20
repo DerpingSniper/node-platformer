@@ -41,7 +41,7 @@ io.sockets.on('connection', function(socket){
             });
             socket.nickname = data;
             users[socket.nickname] = socket;
-            players[socket.nickname] = new player(socket.nickname, 0, 0, PLAYER_W, PLAYER_H);
+            players[socket.nickname] = new player(socket.nickname, 225, 0, PLAYER_W, PLAYER_H);
             io.sockets.emit('usernames', Object.keys(users));
         } else {
             callback(false);
@@ -91,7 +91,9 @@ function gameLoop() {
             x: player.x,
             y: player.y,
             w: player.w,
-            h: player.h
+            h: player.h,
+            k: player.kills,
+            d: player.deaths
         }
     }
     

@@ -1,6 +1,9 @@
 module.exports = function(nickname, x, y, w, h) {
     this.nickname = nickname;
 
+    this.kills = 0;
+    this.deaths = 0;
+
     this.x = x;
     this.y = y;
     this.w = w;
@@ -9,7 +12,6 @@ module.exports = function(nickname, x, y, w, h) {
     this.xSpeed = 0;
     this.ySpeed = 0;
     this.fall = false;
-    this.wall = false;
 
     this.up = false;
     this.down = false;
@@ -17,7 +19,7 @@ module.exports = function(nickname, x, y, w, h) {
     this.right = false;
 
     this.move = function() {
-        if(this.fall && !this.wall) {
+        if(this.fall) {
             if(this.ySpeed < MAX_YSPEED * ACCEL_TICKS) this.ySpeed++;
             this.y += Math.ceil(this.ySpeed/ACCEL_TICKS);
             platform = this.collidePlatforms();
@@ -37,7 +39,9 @@ module.exports = function(nickname, x, y, w, h) {
                     this.y = player.y + player.h;
                     this.ySpeed = 1;
                 } else if(this.ySpeed >= STOMP_SPEED * ACCEL_TICKS) {
+                    player.deaths++;
                     player.reset();
+                    this.kills++;
                     this.ySpeed = 1;
                 } else {
                     this.y = player.y - this.h;
@@ -89,8 +93,6 @@ module.exports = function(nickname, x, y, w, h) {
             this.ySpeed = 0;
         }
 
-        this.wall = false;
-
         if(this.left) {
             if(this.fall) {
                 if(this.xSpeed > -(MAX_XSPEED - 1)) this.xSpeed--;
@@ -100,7 +102,6 @@ module.exports = function(nickname, x, y, w, h) {
             this.x += this.xSpeed;
             platform = this.collidePlatforms();
             if(platform) {
-                this.wall = true;
                 if(this.xSpeed < 0) {
                     this.x = platform.x + platform.w;
                 } else {
@@ -124,7 +125,6 @@ module.exports = function(nickname, x, y, w, h) {
             this.x += this.xSpeed;
             platform = this.collidePlatforms();
             if(platform) {
-                this.wall = true;
                 if(this.xSpeed > 0) {
                     this.x = platform.x - this.w;
                 } else {
@@ -149,11 +149,9 @@ module.exports = function(nickname, x, y, w, h) {
 
         if(this.x < 0) {
             this.x = 0;
-            this.wall = true;
         }
         if(this.x > CANVAS_W - this.w) {
             this.x = CANVAS_W - this.w;
-            this.wall = true;
         }
     }
 
@@ -248,7 +246,7 @@ module.exports = function(nickname, x, y, w, h) {
     }
 
     this.reset = function() {
-        this.x = 0;
+        this.x = 225;
         this.y = 0;
         this.fall = false;
         this.ySpeed = 0;
