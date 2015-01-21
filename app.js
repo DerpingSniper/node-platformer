@@ -41,7 +41,7 @@ io.sockets.on('connection', function(socket){
             });
             socket.nickname = data;
             users[socket.nickname] = socket;
-            players[socket.nickname] = new player(socket.nickname, CANVAS_W/2 - 25, 0, PLAYER_W, PLAYER_H);
+            players[socket.nickname] = new player(socket.nickname, CANVAS_W/2 - PLAYER_W/2, 0, PLAYER_W, PLAYER_H);
             io.sockets.emit('usernames', Object.keys(users));
         } else {
             callback(false);
